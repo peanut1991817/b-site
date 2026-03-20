@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B站风格视频站</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #18191c;
+            --bg-secondary: #1f2023;
+            --bg-hover: #2f3033;
+            --text-primary: #e3e5e7;
+            --text-secondary: #9499a0;
+            --accent-pink: #fb7299;
+            --accent-blue: #00aeec;
+            --border: #2f3033;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-secondary);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--accent-pink);
+            cursor: pointer;
+        }
+
+        .search-box {
+            flex: 1;
+            max-width: 500px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--accent-pink);
+        }
+
+        .user-area {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-blue));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Main Content */
+        .main {
+            max-width: 1700px;
+            margin: 0 auto;
+            padding: 20px 60px;
+        }
+
+        /* Banner */
+        .banner {
+            background: linear-gradient(135deg, #7eb7e6 0%, #f598a9 50%, #e6c88b 100%);
+            border-radius: 12px;
+            height: 160px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        /* Video Grid */
+        .section-title {
+            font-size: 20px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+        }
+
+        .video-card {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .video-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .video-card .cover {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            aspect-ratio: 16/10;
+            background: #2f3033;
+        }
+
+        .video-card .cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-card .cover .duration {
+            position: absolute;
+            bottom: 6px;
+            right: 6px;
+            background: rgba(0,0,0,0.7);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .video-card .cover .play-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 46px;
+            height: 46px;
+            background: rgba(0,0,0,0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .video-card:hover .cover .play-icon {
+            opacity: 1;
+        }
+
+        .video-card .cover .play-icon::after {
+            content: '';
+            width: 0;
+            height: 0;
+            border-left: 14px solid #fff;
+            border-top: 9px solid transparent;
+            border-bottom: 9px solid transparent;
+            margin-left: 4px;
+        }
+
+        .video-card .info {
+            padding: 10px 0;
+        }
+
+        .video-card .title {
+            font-size: 15px;
+            line-height: 22px;
+            height: 44px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            margin-bottom: 6px;
+        }
+
+        .video-card .meta {
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .video-card .meta .play-count::before {
+            content: '▶';
+            font-size: 10px;
+            margin-right: 4px;
+        }
+
+        .video-card .meta .date {
+            margin-left: auto;
+        }
+
+        /* Video Player Page */
+        .player-page {
+            display: none;
+        }
+
+        .player-page.active {
+            display: block;
+        }
+
+        .home-page.hidden {
+            display: none;
+        }
+
+        .player-container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .player-main {
+            flex: 1;
+        }
+
+        .player-wrapper {
+            position: relative;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+        }
+
+        .player-wrapper video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* Danmaku */
+        .danmaku-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 40px;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .danmaku {
+            position: absolute;
+            white-space: nowrap;
+            font-size: 20px;
+            color: #fff;
+            text-shadow: 1px 1px 2px #000, -1px -1px 2px #000;
+            font-weight: 500;
+            will-change: transform;
+        }
+
+        .danmaku-input-area {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 12px;
+        }
+
+        .danmaku-input-area input {
+            flex: 1;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 6px 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .danmaku-input-area button {
+            background: var(--accent-pink);
+            border: none;
+            color: #fff;
+            padding: 6px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .danmaku-input-area button:hover {
+            opacity: 0.9;
+        }
+
+        .player-title {
+            font-size: 20px;
+            font-weight: 500;
+            margin: 16px 0 12px;
+        }
+
+        .player-stats {
+            display: flex;
+            gap: 20px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .player-sidebar {
+            width: 280px;
+        }
+
+        .related-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+
+        .related-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .related-item {
+            display: flex;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .related-item:hover .related-info .title {
+            color: var(--accent-pink);
+        }
+
+        .related-item .cover {
+            width: 140px;
+            aspect-ratio: 16/9;
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--bg-hover);
+            flex-shrink: 0;
+        }
+
+        .related-item .cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .related-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .related-info .title {
+            font-size: 14px;
+            line-height: 20px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 6px;
+        }
+
+        .related-info .meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .back-btn:hover {
+            color: var(--text-primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 1400px) {
+            .video-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 1100px) {
+            .video-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .player-container {
+                flex-direction: column;
+            }
+            .player-sidebar {
+                width: 100%;
+            }
+            .related-list {
+                flex-direction: row;
+                overflow-x: auto;
+            }
+            .related-item {
+                flex-direction: column;
+                width: 180px;
+                flex-shrink: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo" onclick="showHome()">B站风格</div>
+        <div class="search-box">
+            <input type="text" placeholder="搜索视频...">
+        </div>
+        <div class="user-area">
+            <div class="avatar">L</div>
+        </div>
+    </div>
+
+    <!-- Home Page -->
+    <div class="home-page">
+        <div class="main">
+            <div class="banner">
+                欢迎来到视频站
+            </div>
+            <div class="section-title">推荐视频</div>
+            <div class="video-grid" id="videoGrid"></div>
+        </div>
+    </div>
+
+    <!-- Player Page -->
+    <div class="player-page">
+        <div class="main">
+            <div class="back-btn" onclick="showHome()">← 返回</div>
+            <div class="player-container">
+                <div class="player-main">
+                    <div class="player-wrapper">
+                        <video id="player" controls></video>
+                        <div class="danmaku-layer" id="danmakuLayer"></div>
+                        <div class="danmaku-input-area">
+                            <input type="text" id="danmakuInput" placeholder="发送弹幕..." maxlength="20">
+                            <button onclick="sendDanmaku()">发送</button>
+                        </div>
+                    </div>
+                    <h1 class="player-title" id="playerTitle"></h1>
+                    <div class="player-stats">
+                        <span id="playerViews"></span>
+                        <span id="playerDate"></span>
+                    </div>
+                </div>
+                <div class="player-sidebar">
+                    <div class="related-title">相关推荐</div>
+                    <div class="related-list" id="relatedList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample Video Data
+        const videos = [
+            {
+                id: 1,
+                title: "【全程高能】2026年AI最新技术演示，太强了！",
+                cover: "https://picsum.photos/seed/v1/400/250",
+                duration: "12:34",
+                plays: "52.3万",
+                date: "2026-03-15"
+            },
+            {
+                id: 2,
+                title: "程序员崩溃瞬间 #101 - 当我删库跑路后",
+                cover: "https://picsum.photos/seed/v2/400/250",
+                duration: "08:22",
+                plays: "23.8万",
+                date: "2026-03-14"
+            },
+            {
+                id: 3,
+                title: "10分钟带你了解OpenClaw所有功能",
+                cover: "https://picsum.photos/seed/v3/400/250",
+                duration: "15:47",
+                plays: "18.5万",
+                date: "2026-03-13"
+            },
+            {
+                id: 4,
+                title: "【硬核】如何用Python写一个B站弹幕播放器",
+                cover: "https://picsum.photos/seed/v4/400/250",
+                duration: "25:10",
+                plays: "89.2万",
+                date: "2026-03-12"
+            },
+            {
+                id: 5,
+                title: "深夜coding，咖啡与代码的浪漫",
+                cover: "https://picsum.photos/seed/v5/400/250",
+                duration: "03:45",
+                plays: "12.1万",
+                date: "2026-03-11"
+            },
+            {
+                id: 6,
+                title: "macOS vs Windows vs Linux - 2026年终极对决",
+                cover: "https://picsum.photos/seed/v6/400/250",
+                duration: "42:18",
+                plays: "156.7万",
+                date: "2026-03-10"
+            },
+            {
+                id: 7,
+                title: "当我让AI帮我写代码后...整个过程太离谱",
+                cover: "https://picsum.photos/seed/v7/400/250",
+                duration: "18:33",
+                plays: "67.4万",
+                date: "2026-03-09"
+            },
+            {
+                id: 8,
+                title: "【教程】零基础入门Python，看完就会了",
+                cover: "https://picsum.photos/seed/v8/400/250",
+                duration: "55:20",
+                plays: "234.1万",
+                date: "2026-03-08"
+            },
+            {
+                id: 9,
+                title: "赛博朋克2077全新DLC实机演示",
+                cover: "https://picsum.photos/seed/v9/400/250",
+                duration: "32:45",
+                plays: "98.6万",
+                date: "2026-03-07"
+            },
+            {
+                id: 10,
+                title: "今天吃什么？—— 程序员版",
+                cover: "https://picsum.photos/seed/v10/400/250",
+                duration: "06:12",
+                plays: "8.9万",
+                date: "2026-03-06"
+            }
+        ];
+
+        // Danmaku data
+        const danmakuColors = ['#fff', '#fb7299', '#00aeec', '#f598a9', '#7eb7e6', '#e6c88b'];
+        let currentDanmaku = [];
+
+        // Render video grid
+        function renderVideoGrid() {
+            const grid = document.getElementById('videoGrid');
+            grid.innerHTML = videos.map(v => `
+                <div class="video-card" onclick="playVideo(${v.id})">
+                    <div class="cover">
+                        <img src="${v.cover}" alt="${v.title}">
+                        <span class="duration">${v.duration}</span>
+                        <div class="play-icon"></div>
+                    </div>
+                    <div class="info">
+                        <div class="title">${v.title}</div>
+                        <div class="meta">
+                            <span class="play-count">${v.plays}</span>
+                            <span class="date">${v.date}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Show home page
+        function showHome() {
+            document.querySelector('.home-page').classList.remove('hidden');
+            document.querySelector('.player-page').classList.remove('active');
+            document.querySelector('.header').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Play video
+        function playVideo(id) {
+            const video = videos.find(v => v.id === id);
+            if (!video) return;
+
+            document.querySelector('.home-page').classList.add('hidden');
+            document.querySelector('.player-page').classList.add('active');
+
+            document.getElementById('playerTitle').textContent = video.title;
+            document.getElementById('playerViews').textContent = `▶ ${video.plays} ·`;
+            document.getElementById('playerDate').textContent = video.date;
+
+            // Use a sample video source
+            const player = document.getElementById('player');
+            player.src = 'https://www.w3schools.com/html/mov_bbb.mp4';
+            player.play();
+
+            // Generate some random danmaku
+            currentDanmaku = generateDanmaku(20);
+            renderDanmaku();
+
+            // Render related videos
+            renderRelated(id);
+        }
+
+        // Generate random danmaku
+        function generateDanmaku(count) {
+            const contents = [
+                "前方高能！", "哈哈哈", "太强了", "学到了", "666",
+                "妙啊", "绝了", "前排围观", "火钳刘明", "awsl",
+                "太卷了", "学不动了", "真不错", "有点东西", "舒服了"
+            ];
+            return Array(count).fill(0).map((_, i) => ({
+                text: contents[Math.floor(Math.random() * contents.length)],
+                top: Math.random() * 70 + 5,
+                color: danmakuColors[Math.floor(Math.random() * danmakuColors.length)],
+                delay: i * 800 + Math.random() * 500
+            }));
+        }
+
+        // Render danmaku
+        function renderDanmaku() {
+            const layer = document.getElementById('danmakuLayer');
+            layer.innerHTML = '';
+
+            currentDanmaku.forEach(d => {
+                setTimeout(() => {
+                    const el = document.createElement('div');
+                    el.className = 'danmaku';
+                    el.textContent = d.text;
+                    el.style.top = d.top + '%';
+                    el.style.color = d.color;
+                    el.style.left = '100%';
+                    layer.appendChild(el);
+
+                    // Animate
+                    const duration = 6000 + Math.random() * 2000;
+                    el.animate([
+                        { left: '100%' },
+                        { left: '-200px' }
+                    ], {
+                        duration: duration,
+                        easing: 'linear'
+                    }).onfinish = () => el.remove();
+                }, d.delay);
+            });
+
+            // Loop danmaku
+            setTimeout(renderDanmaku, 15000);
+        }
+
+        // Send danmaku
+        function sendDanmaku() {
+            const input = document.getElementById('danmakuInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            currentDanmaku.push({
+                text: text,
+                top: Math.random() * 70 + 5,
+                color: danmakuColors[Math.floor(Math.random() * danmakuColors.length)],
+                delay: 0
+            });
+
+            // Render immediately
+            const layer = document.getElementById('danmakuLayer');
+            const el = document.createElement('div');
+            el.className = 'danmaku';
+            el.textContent = text;
+            el.style.top = currentDanmaku[currentDanmaku.length - 1].top + '%';
+            el.style.color = currentDanmaku[currentDanmaku.length - 1].color;
+            el.style.left = '100%';
+            layer.appendChild(el);
+
+            el.animate([
+                { left: '100%' },
+                { left: '-200px' }
+            ], {
+                duration: 6000,
+                easing: 'linear'
+            }).onfinish = () => el.remove();
+
+            input.value = '';
+        }
+
+        // Enter to send danmaku
+        document.getElementById('danmakuInput').addEventListener('keypress', e => {
+            if (e.key === 'Enter') sendDanmaku();
+        });
+
+        // Render related videos
+        function renderRelated(currentId) {
+            const list = document.getElementById('relatedList');
+            const related = videos.filter(v => v.id !== currentId).slice(0, 8);
+            list.innerHTML = related.map(v => `
+                <div class="related-item" onclick="playVideo(${v.id})">
+                    <div class="cover">
+                        <img src="${v.cover}" alt="${v.title}">
+                    </div>
+                    <div class="related-info">
+                        <div class="title">${v.title}</div>
+                        <div class="meta">${v.plays} · ${v.date}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Initialize
+        renderVideoGrid();
+    </script>
+</body>
+</html>
